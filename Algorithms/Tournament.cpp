@@ -1,4 +1,4 @@
-//使用链表实现锦标赛算法
+//锦标赛算法
 #include<iostream>
 #include<stdio.h>
 #include<stdlib.h>//malloc头文件
@@ -9,13 +9,16 @@ typedef struct LNode {
     struct LNode* next;
 }LinkNode;
 
-void ChampionMax(LinkNode* d, int num);
-void ChampionMin(LinkNode* d, int num);
+void Champion(LinkNode* d, int num,bool (*p)(int,int));
 void InsertListL(LinkNode* d, LinkNode* p);
-int FindSecondMax(LinkNode* d);
-int FindSecondMin(LinkNode* d);
-
-
+int FindSecond(LinkNode* d,bool(*p)(int, int));
+//判断函数
+bool Max(int a, int b) {
+    return a < b;
+}
+bool Min(int a, int b) {
+    return a > b;
+}
 int main() {
 
     int num;
@@ -35,9 +38,9 @@ int main() {
         max[i].data = a[i];
         max[i].next = NULL;
     }
-    ChampionMax(max, num);
+    Champion(max, num,Max);
     int max1 = max[0].data;
-    int max2 = FindSecondMax(&max[0]);
+    int max2 = FindSecond(&max[0],Max);
 
     LinkNode* min = (LinkNode*)malloc(sizeof(LinkNode) * num);
     //给每个节点赋值
@@ -45,9 +48,9 @@ int main() {
         min[i].data = a[i];
         min[i].next = NULL;
     }
-    ChampionMin(min, num);
+    Champion(min, num, Min);
     int min1 = min[0].data;
-    int min2 = FindSecondMin(&min[0]);
+    int min2 = FindSecond(&min[0],Min);
 
     printf("max=%d max2=%d\n", max1, max2);
     printf("min=%d min2=%d", min1, min2);
@@ -59,15 +62,14 @@ int main() {
     /**********  End  **********/
 }
 
-
-//锦标赛算法，查找第一大和第二大,只考虑偶数个情况
-void ChampionMax(LinkNode* d, int num) {
+//锦标赛算法，查找第一大（小）和第二大（小）
+void Champion(LinkNode* d, int num, bool (*p)(int, int)) {
     //多轮循环找出最大
     while (num != 1) {
-        int count = 0;//记录每轮较大值
-        //两两比较查找较大值，并将较小值头插入到较大值的链表中,需保证i+1不能大于等于num
+        int count = 0;//记录每轮较大（小）值
+        //两两比较查找较大（小）值，并将较小（大）值头插入到较大（小）值的链表中,需保证i+1不能大于等于num
         for (int i = 0; i + 1 < num; i += 2) {
-            if (d[i].data < d[i + 1].data) {
+            if (p(d[i].data,d[i + 1].data)) {//回调函数判断大小
                 LinkNode* p=(LinkNode*)malloc(sizeof(LinkNode));
                 p->data = d[i].data;//必须创建一个新节点保存需要插入的节点，不然可能造成死循环
                 p->next = NULL;                //例如InsertListL(&d[i + 1], &d[i]);  
@@ -94,69 +96,23 @@ void ChampionMax(LinkNode* d, int num) {
     }
 }
 
-//锦标赛算法，查找第一小和第二小,只考虑偶数个情况
-void ChampionMin(LinkNode* d, int num) {
-    //多轮循环找出最小
-    while (num != 1) {
-        int count = 0;//记录每轮较小值
-        //两两比较查找较小值，并将较大值头插入到较值的链表中
-        for (int i = 0; i + 1 < num; i += 2) {
-            if (d[i].data > d[i + 1].data) {
-                LinkNode* p = (LinkNode*)malloc(sizeof(LinkNode));
-                p->data = d[i].data;
-                p->next = NULL;
-                InsertListL(&d[i + 1], p);
-                d[count] = d[i + 1];
-            }
-            else {
-                LinkNode* p = (LinkNode*)malloc(sizeof(LinkNode));
-                p->data = d[i+1].data;
-                p->next = NULL;
-                InsertListL(&d[i], p);
-                d[count] = d[i];
-            }
-            count++;
-        }
-        //考虑轮空值
-        if (num % 2 == 1) {
-            d[count] = d[num-1];
-            num = num / 2 + 1;
-        }
-        else {
-            num /= 2;
-        }
-    }
-}
+
 //头插法插入
 void InsertListL(LinkNode* d, LinkNode* p) {
     p->next = d->next;
     d->next = p;
 }
 
-//查找第二大值
-int FindSecondMax(LinkNode* d) {
+//查找第二大值或第二小值
+int FindSecond(LinkNode* d,bool(*p)(int, int)) {
     LinkNode* s = d->next;//s指向d的第二个节点
-    int max2 = s->data;//max2保存第二大值
+    int m2 = s->data;//m2保存第二大或第二小值
     while (s->next != NULL) {
         s = s->next;
-        if (max2 < s->data) {
-            max2 = s->data;
+        if (p(m2 , s->data)) {//回调函数判断大小
+            m2 = s->data;
         }
     }
 
-    return max2;
-}
-
-//查找第二小值
-int FindSecondMin(LinkNode* d) {
-    LinkNode* s = d->next;//s指向d的第二个节点
-    int min2 = s->data;//max2保存第二小
-    while (s->next != NULL) {
-        s = s->next;
-        if (min2 > s->data) {
-            min2 = s->data;
-        }
-    }
-
-    return min2;
+    return m2;
 }
